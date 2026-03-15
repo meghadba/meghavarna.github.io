@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Meghavarna — Oracle Apps DBA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+
+  <style>
+    /* ── RESET & BASE ─────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0e0e0f;
+      --surface:   #161618;
+      --border:    #2a2a2d;
+      --gold:      #c8a96e;
+      --gold-dim:  #8a7050;
+      --text:      #e8e4dd;
+      --muted:     #7a776f;
+      --serif:     'Cormorant Garamond', serif;
+      --sans:      'DM Sans', sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-weight: 300;
+      font-size: 16px;
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    ::selection { background: var(--gold); color: var(--bg); }
+
+    /* ── SCROLLBAR ────────────────────────────────── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 2px; }
+
+    /* ── NOISE OVERLAY ────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+      opacity: 0.025;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ── NAV ──────────────────────────────────────── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.4rem 4rem;
+      border-bottom: 1px solid transparent;
+      transition: border-color .4s, background .4s, backdrop-filter .4s;
+    }
+    nav.scrolled {
+      border-color: var(--border);
+      background: rgba(14,14,15,.75);
+      backdrop-filter: blur(18px);
+    }
+    .nav-logo {
+      font-family: var(--serif);
+      font-size: 1.25rem;
+      font-weight: 300;
+      letter-spacing: .04em;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--gold); }
+    .nav-links { display: flex; gap: 2.2rem; list-style: none; }
+    .nav-links a {
+      font-size: .78rem;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color .25s;
+    }
+    .nav-links a:hover { color: var(--gold); }
+
+    /* ── HERO ─────────────────────────────────────── */
+    #hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      justify-content: flex-end;
+      padding: 0 4rem 5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-line {
+      position: absolute;
+      top: 0; right: 8rem;
+      width: 1px; height: 45vh;
+      background: linear-gradient(to bottom, transparent, var(--gold-dim));
+      opacity: .5;
+    }
+
+    .hero-tag {
+      font-size: .72rem;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 1.2rem;
+      opacity: 0;
+      animation: fadeUp .7s .2s forwards;
+    }
+
+    .hero-name {
+      font-family: var(--serif);
+      font-size: clamp(3.5rem, 9vw, 8rem);
+      font-weight: 300;
+      line-height: 1.0;
+      letter-spacing: -.01em;
+      color: var(--text);
+      opacity: 0;
+      animation: fadeUp .8s .4s forwards;
+    }
+    .hero-name em {
+      font-style: italic;
+      color: var(--gold);
+    }
+
+    .hero-sub {
+      font-size: clamp(1rem, 1.6vw, 1.2rem);
+      color: var(--muted);
+      max-width: 480px;
+      margin-top: 1.5rem;
+      opacity: 0;
+      animation: fadeUp .7s .65s forwards;
+    }
+
+    .hero-cta {
+      display: flex; gap: 1.2rem;
+      margin-top: 2.5rem;
+      opacity: 0;
+      animation: fadeUp .7s .85s forwards;
+    }
+    .btn-primary {
+      padding: .75rem 2rem;
+      background: var(--gold);
+      color: var(--bg);
+      font-family: var(--sans);
+      font-size: .78rem;
+      font-weight: 500;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      text-decoration: none;
+      border: none; cursor: pointer;
+      transition: opacity .25s, transform .25s;
+    }
+    .btn-primary:hover { opacity: .85; transform: translateY(-2px); }
+    .btn-ghost {
+      padding: .75rem 2rem;
+      background: transparent;
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: .78rem;
+      font-weight: 400;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      text-decoration: none;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: border-color .25s, color .25s, transform .25s;
+    }
+    .btn-ghost:hover { border-color: var(--gold); color: var(--gold); transform: translateY(-2px); }
+
+    .hero-scroll {
+      position: absolute;
+      bottom: 2.5rem; right: 4rem;
+      display: flex; align-items: center; gap: .7rem;
+      font-size: .65rem; letter-spacing: .2em; text-transform: uppercase;
+      color: var(--muted);
+      writing-mode: vertical-rl;
+      opacity: 0;
+      animation: fadeIn 1s 1.2s forwards;
+    }
+    .hero-scroll::before {
+      content: '';
+      width: 1px; height: 50px;
+      background: linear-gradient(to bottom, var(--gold-dim), transparent);
+      display: block;
+      animation: scrollLine 2s 1.5s ease-in-out infinite;
+    }
+
+    /* ── SECTION BASE ─────────────────────────────── */
+    section { padding: 7rem 4rem; }
+
+    .section-label {
+      font-size: .68rem;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: .8rem;
+    }
+    .section-title {
+      font-family: var(--serif);
+      font-size: clamp(2.2rem, 4vw, 3.2rem);
+      font-weight: 300;
+      line-height: 1.15;
+      color: var(--text);
+      margin-bottom: 2rem;
+    }
+    .divider {
+      width: 3rem; height: 1px;
+      background: var(--gold-dim);
+      margin-bottom: 3rem;
+    }
+
+    /* ── ABOUT ────────────────────────────────────── */
+    #about {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6rem;
+      align-items: center;
+      border-top: 1px solid var(--border);
+    }
+    .about-text p {
+      color: var(--muted);
+      margin-bottom: 1.2rem;
+      font-size: .95rem;
+    }
+    .about-text p strong { color: var(--text); font-weight: 400; }
+
+    .about-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 2rem 1.8rem;
+      transition: border-color .3s;
+    }
+    .stat-card:hover { border-color: var(--gold-dim); }
+    .stat-num {
+      font-family: var(--serif);
+      font-size: 3rem;
+      font-weight: 300;
+      color: var(--gold);
+      line-height: 1;
+      display: block;
+    }
+    .stat-label {
+      font-size: .72rem;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: .4rem;
+      display: block;
+    }
+
+    /* ── SKILLS ───────────────────────────────────── */
+    #skills {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .skills-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      margin-top: 1rem;
+    }
+    .skill-item {
+      background: var(--surface);
+      padding: 1.6rem 1.8rem;
+      display: flex; align-items: center; gap: 1rem;
+      transition: background .25s;
+      cursor: default;
+    }
+    .skill-item:hover { background: var(--bg); }
+    .skill-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      flex-shrink: 0;
+    }
+    .skill-name {
+      font-size: .88rem;
+      color: var(--muted);
+      transition: color .25s;
+    }
+    .skill-item:hover .skill-name { color: var(--text); }
+
+    /* ── PROJECTS ─────────────────────────────────── */
+    #projects { border-top: 1px solid var(--border); }
+
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1rem;
+    }
+    .project-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 2.2rem;
+      display: flex; flex-direction: column;
+      gap: 1rem;
+      transition: border-color .3s, transform .3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .project-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--gold), transparent);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform .4s;
+    }
+    .project-card:hover { border-color: var(--gold-dim); transform: translateY(-4px); }
+    .project-card:hover::before { transform: scaleX(1); }
+
+    .project-number {
+      font-family: var(--serif);
+      font-size: .85rem;
+      color: var(--gold-dim);
+      letter-spacing: .08em;
+    }
+    .project-title {
+      font-family: var(--serif);
+      font-size: 1.5rem;
+      font-weight: 400;
+      color: var(--text);
+      line-height: 1.2;
+    }
+    .project-desc {
+      font-size: .88rem;
+      color: var(--muted);
+      flex: 1;
+    }
+    .project-tags {
+      display: flex; flex-wrap: wrap; gap: .5rem;
+    }
+    .tag {
+      font-size: .65rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--gold-dim);
+      border: 1px solid var(--gold-dim);
+      padding: .2rem .6rem;
+    }
+    .project-link {
+      font-size: .75rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      display: flex; align-items: center; gap: .5rem;
+      margin-top: .5rem;
+      transition: color .25s;
+    }
+    .project-link:hover { color: var(--gold); }
+    .project-link::after { content: '→'; transition: transform .25s; }
+    .project-link:hover::after { transform: translateX(4px); }
+
+    /* ── CONTACT ──────────────────────────────────── */
+    #contact {
+      border-top: 1px solid var(--border);
+      text-align: center;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    #contact .section-title {
+      font-size: clamp(2.8rem, 6vw, 5rem);
+    }
+    #contact .section-title em {
+      font-style: italic;
+      color: var(--gold);
+    }
+    .contact-sub {
+      color: var(--muted);
+      max-width: 440px;
+      font-size: .95rem;
+      margin-bottom: 2.5rem;
+    }
+    .contact-links {
+      display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;
+    }
+
+    /* ── FOOTER ───────────────────────────────────── */
+    footer {
+      padding: 2rem 4rem;
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .footer-copy {
+      font-size: .72rem;
+      letter-spacing: .1em;
+      color: var(--muted);
+    }
+    .footer-socials { display: flex; gap: 1.5rem; }
+    .footer-socials a {
+      font-size: .72rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color .25s;
+    }
+    .footer-socials a:hover { color: var(--gold); }
+
+    /* ── REVEAL ANIMATION ─────────────────────────── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity .7s ease, transform .7s ease;
+    }
+    .reveal.visible { opacity: 1; transform: none; }
+
+    /* ── KEYFRAMES ────────────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: none; }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    @keyframes scrollLine {
+      0%, 100% { transform: scaleY(1); opacity: 1; }
+      50%       { transform: scaleY(.5); opacity: .4; }
+    }
+
+    /* ── RESPONSIVE ───────────────────────────────── */
+    @media (max-width: 768px) {
+      nav { padding: 1.2rem 1.8rem; }
+      .nav-links { display: none; }
+      #hero, section, footer { padding-left: 1.8rem; padding-right: 1.8rem; }
+      #about { grid-template-columns: 1fr; gap: 3rem; }
+      .hero-scroll { display: none; }
+      .hero-line { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── NAV ─────────────────────────────────────── -->
+  <nav id="navbar">
+    <a class="nav-logo" href="#"><span>M</span>eghavarna</a>
+    <ul class="nav-links">
+      <li><a href="#about">About</a></li>
+      <li><a href="#skills">Skills</a></li>
+      <li><a href="#projects">Work</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+  </nav>
+
+  <!-- ── HERO ────────────────────────────────────── -->
+  <section id="hero">
+    <div class="hero-line"></div>
+    <p class="hero-tag">Oracle Apps DBA · Portfolio 2025</p>
+    <h1 class="hero-name">Megha<br><em>varna</em></h1>
+    <p class="hero-sub">Oracle Apps DBA with 4 years of experience in EBS, OCI, database administration, and cloud infrastructure.</p>
+    <div class="hero-cta">
+      <a href="#projects" class="btn-primary">View My Work</a>
+      <a href="#contact" class="btn-ghost">Get In Touch</a>
+    </div>
+    <div class="hero-scroll">Scroll</div>
+  </section>
+
+  <!-- ── ABOUT ────────────────────────────────────── -->
+  <section id="about">
+    <div class="about-text reveal">
+      <p class="section-label">About Me</p>
+      <h2 class="section-title">Database expert,<br><em style="font-family:var(--serif);font-style:italic;color:var(--gold)">cloud-ready</em></h2>
+      <div class="divider"></div>
+      <p>I'm <strong>Meghavarna</strong>, an Oracle Apps DBA with 4 years of hands-on experience managing Oracle E-Business Suite (EBS), Oracle Cloud Infrastructure (OCI), and enterprise database environments.</p>
+      <p>My work spans database administration, EBS patching and cloning, RMAN backup & recovery, performance tuning, and cloud migrations. I also work across <strong>Linux/Ubuntu servers</strong> and ERPNext/Frappe platforms.</p>
+      <p>I'm passionate about keeping critical systems stable, solving complex infrastructure challenges, and continuously expanding my knowledge in cloud-native DBA practices.</p>
+    </div>
+    <div class="about-stats reveal">
+      <div class="stat-card">
+        <span class="stat-num">4+</span>
+        <span class="stat-label">Years Experience</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num">15+</span>
+        <span class="stat-label">DB Environments</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num">100%</span>
+        <span class="stat-label">Uptime Focus</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num">3+</span>
+        <span class="stat-label">Platforms Managed</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SKILLS ───────────────────────────────────── -->
+  <section id="skills">
+    <div class="reveal">
+      <p class="section-label">Expertise</p>
+      <h2 class="section-title">What I bring<br>to the table</h2>
+      <div class="divider"></div>
+    </div>
+    <div class="skills-grid reveal">
+      <div class="skill-item"><span class="skill-dot"></span><span class="skill-name">Oracle EBS R12</span></div>
+      <div class="skill-item"><span class="skill-dot"></span><span class="skill-name">Oracle Database 19c</span></div>
+      <div class="skill-item"><span class="skill-dot"></span><span class="skill-name">OCI (Oracle Cloud)</span></div>
+      <div class="skill-item"><span class="skill-dot"></span><span class="skill-name">RMAN Backup & Recovery</span></div>
+      <div class="skill-item"><span class="skill-dot"></span><span class="skill-name">EBS Patching (adop)</span></div>
+      <div class="skill-item"><span class="skill-dot"></span><span class="skill-name">DB Cloning & Migration</span></div>
+      <div class="skill-item"><span class="skill-dot"></span><span class="skill-name">Performance Tuning</span></div>
+      <div class="skill-item"><span class="skill-dot"></span><span class="skill-name">Data Pump / Export</span></div>
+      <div class="skill-item"><span class="skill-dot"></span><span class="skill-name">Linux / Ubuntu Admin</span></div>
+      <div class="skill-item"><span class="skill-dot"></span><span class="skill-name">ERPNext / Frappe</span></div>
+      <div class="skill-item"><span class="skill-dot"></span><span class="skill-name">Shell Scripting</span></div>
+      <div class="skill-item"><span class="skill-dot"></span><span class="skill-name">SQL / PL-SQL</span></div>
+    </div>
+  </section>
+
+  <!-- ── PROJECTS ──────────────────────────────────── -->
+  <section id="projects">
+    <div class="reveal">
+      <p class="section-label">Selected Work</p>
+      <h2 class="section-title">Projects &<br>case studies</h2>
+      <div class="divider"></div>
+    </div>
+    <div class="projects-grid">
+
+      <div class="project-card reveal">
+        <span class="project-number">01</span>
+        <h3 class="project-title">EBS to OCI Cloud Migration</h3>
+        <p class="project-desc">Led the lift-and-shift migration of an on-premises Oracle EBS R12 environment to OCI using RMAN and Data Pump, achieving zero data loss and minimal downtime.</p>
+        <div class="project-tags">
+          <span class="tag">OCI</span>
+          <span class="tag">RMAN</span>
+          <span class="tag">EBS R12</span>
+        </div>
+        <a href="#" class="project-link">View Details</a>
+      </div>
+
+      <div class="project-card reveal">
+        <span class="project-number">02</span>
+        <h3 class="project-title">EBS R12 Patching & Upgrade</h3>
+        <p class="project-desc">Managed end-to-end EBS application and database patching using adop (online patching), including cutover planning, rollback strategy, and post-patch validation.</p>
+        <div class="project-tags">
+          <span class="tag">adop</span>
+          <span class="tag">Patching</span>
+          <span class="tag">Oracle 19c</span>
+        </div>
+        <a href="#" class="project-link">View Details</a>
+      </div>
+
+      <div class="project-card reveal">
+        <span class="project-number">03</span>
+        <h3 class="project-title">ERPNext Production Setup</h3>
+        <p class="project-desc">Deployed and administered a production ERPNext environment on Ubuntu with bench, MariaDB, Nginx, and supervisor — including backup automation and performance tuning.</p>
+        <div class="project-tags">
+          <span class="tag">ERPNext</span>
+          <span class="tag">Frappe</span>
+          <span class="tag">Linux</span>
+        </div>
+        <a href="#" class="project-link">View Details</a>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── CONTACT ───────────────────────────────────── -->
+  <section id="contact">
+    <p class="section-label reveal">Let's Connect</p>
+    <h2 class="section-title reveal">Ready to work<br><em>together?</em></h2>
+    <p class="contact-sub reveal">Whether you have a project in mind, an opportunity to share, or just want to say hello — my inbox is always open.</p>
+    <div class="contact-links reveal">
+      <a href="mailto:your@email.com" class="btn-primary">Send Me an Email</a>
+      <a href="https://linkedin.com/in/meghavarna" target="_blank" class="btn-ghost">LinkedIn</a>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ────────────────────────────────────── -->
+  <footer>
+    <span class="footer-copy">© 2025 Meghavarna. All rights reserved.</span>
+    <div class="footer-socials">
+      <a href="https://linkedin.com/in/meghavarna">LinkedIn</a>
+      <a href="#">GitHub</a>
+    </div>
+  </footer>
+
+  <!-- ── JS ────────────────────────────────────────── -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+    // Sticky nav
+    const nav = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      nav.classList.toggle('scrolled', window.scrollY > 40);
+    });
+
+    // Scroll reveal
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach((entry, i) => {
+        if (entry.isIntersecting) {
+          // Stagger children in the same parent
+          const siblings = [...entry.target.parentElement.querySelectorAll('.reveal:not(.visible)')];
+          const delay = siblings.indexOf(entry.target) * 80;
+          setTimeout(() => entry.target.classList.add('visible'), delay);
+          observer.unobs
